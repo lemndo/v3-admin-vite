@@ -1,6 +1,8 @@
 import { type RouteRecordRaw, createRouter } from "vue-router"
 import { history, flatMultiLevelRoutes } from "./helper"
 import routeSettings from "@/config/route"
+// import { KeepAlive } from "vue/dist/vue.mjs"
+// import { title } from "process"
 
 const Layouts = () => import("@/layouts/index.vue")
 
@@ -57,6 +59,36 @@ export const constantRoutes: RouteRecordRaw[] = [
           title: "首页",
           svgIcon: "dashboard",
           affix: true
+        }
+      }
+    ]
+  },
+  {
+    path: "/canteen",
+    component: Layouts,
+    redirect: "/canteen/satisfaction",
+    name: "Canteen",
+    meta: {
+      title: "食堂管理",
+      elIcon: "Grid"
+    },
+    children: [
+      {
+        path: "vote",
+        component: () => import("@/views/canteen/vote/index.vue"),
+        name: "Vote",
+        meta: {
+          title: "投票",
+          KeepAlive: true
+        }
+      },
+      {
+        path: "satisfaction",
+        component: () => import("@/views/canteen/satisfaction/index.vue"),
+        name: "Satisfaction",
+        meta: {
+          title: "食堂满意度调查",
+          KeepAlive: true
         }
       }
     ]
