@@ -36,15 +36,15 @@ function createService() {
         return Promise.reject(new Error("非本系统的接口"))
       }
       switch (code) {
-        case 0:
-          // 本系统采用 code === 0 来表示没有业务错误
+        case 20000:
+          // 本系统采用 code === 200000 来表示没有业务错误
           return apiData
         case 401:
           // Token 过期时
           return logout()
         default:
           // 不是正确的 code
-          ElMessage.error(apiData.message || "Error")
+          ElMessage.error(apiData.msg || "Error")
           return Promise.reject(new Error("Error"))
       }
     },

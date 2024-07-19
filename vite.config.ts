@@ -39,6 +39,19 @@ export default ({ mode }: ConfigEnv): UserConfigExport => {
           ws: true,
           /** 是否允许跨域 */
           changeOrigin: true
+        },
+        "/api/admin": {
+          target: "http://localhost:8083/api/admin",
+          ws: true,
+          /** 是否允许跨域 */
+          changeOrigin: true,
+          rewrite: (path) => path.replace("/api/admin", "")
+        },
+        "/api/eva": {
+          target: "http://localhost:8082/api/eva",
+          ws: true,
+          /** 是否允许跨域 */
+          changeOrigin: true
         }
       },
       /** 预热常用文件，提高初始页面加载速度 */

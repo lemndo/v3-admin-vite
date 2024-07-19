@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { reactive, ref, watch } from "vue"
-import { createTableDataApi, deleteTableDataApi, updateTableDataApi, getTableDataApi } from "@/api/table"
-import { type CreateOrUpdateTableRequestData, type GetTableData } from "@/api/table/types/table"
+import { createVoteApi, deleteVoteApi, getVoteList, updateVoteApi } from "@/api/canteen"
+import { CreateOrUpdateVoteRequestData, type CanteenVoteData } from "@/api/canteen/types/canteen"
 import { type FormInstance, type FormRules, ElMessage, ElMessageBox } from "element-plus"
 import { Search, Refresh, CirclePlus, Delete, Download, RefreshRight } from "@element-plus/icons-vue"
 import { usePagination } from "@/hooks/usePagination"
@@ -16,23 +16,29 @@ const loading = ref<boolean>(false)
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 
 //#region 增
-const DEFAULT_FORM_DATA: CreateOrUpdateTableRequestData = {
-  id: undefined,
-  username: "",
-  password: ""
+const DEFAULT_FORM_DATA: CreateOrUpdateVoteRequestData = {
+  voteId: undefined,
+  title: "",
+  startTime: "",
+  endTime: "",
+  range: [],
+  qid: []
 }
 const dialogVisible = ref<boolean>(false)
 const formRef = ref<FormInstance | null>(null)
-const formData = ref<CreateOrUpdateTableRequestData>(cloneDeep(DEFAULT_FORM_DATA))
-const formRules: FormRules<CreateOrUpdateTableRequestData> = {
-  username: [{ required: true, trigger: "blur", message: "请输入用户名" }],
-  password: [{ required: true, trigger: "blur", message: "请输入密码" }]
+const formData = ref<CreateOrUpdateVoteRequestData>(cloneDeep(DEFAULT_FORM_DATA))
+const formRules: FormRules<CreateOrUpdateVoteRequestData> = {
+  title: [{ required: true, trigger: "blur", message: "请输入标题" }],
+  range: [{ required: true, trigger: "blur", message: "请选择用餐范围" }],
+  qid: [{ required: true, trigger: "blur", message: "请选择评测选项" }],
+  startTime: [{ required: true, trigger: "blur", message: "请选择开始时间" }],
+  endTime: [{ required: true, trigger: "blur", message: "请选择结束时间" }]
 }
 const handleCreateOrUpdate = () => {
   formRef.value?.validate((valid: boolean, fields) => {
     if (!valid) return console.error("表单校验不通过", fields)
     loading.value = true
-    const api = formData.value.id === undefined ? createTableDataApi : updateTableDataApi
+    const api = formData.value.voteId === undefined ? createVoteApi : updateVoteApi
     api(formData.value)
       .then(() => {
         ElMessage.success("操作成功")
@@ -51,13 +57,15 @@ const resetForm = () => {
 //#endregion
 
 //#region 删
-const handleDelete = (row: GetTableData) => {
-  ElMessageBox.confirm(`正在删除用户：${row.username}，确认删除？`, "提示", {
+const handleDelete = (row: CanteenVoteData) => {
+  ElMessageBox.confirm(`正在删除问卷：${row.title}，确认删除？`, "提示", {
     confirmButtonText: "确定",
     cancelButtonText: "取消",
     type: "warning"
   }).then(() => {
-    deleteTableDataApi(row.id).then(() => {
+    console.log(row.voteId)
+
+    deleteVoteApi(row.voteId).then(() => {
       ElMessage.success("删除成功")
       getTableData()
     })
@@ -66,30 +74,28 @@ const handleDelete = (row: GetTableData) => {
 //#endregion
 
 //#region 改
-const handleUpdate = (row: GetTableData) => {
+const handleUpdate = (row: CreateOrUpdateVoteRequestData) => {
   dialogVisible.value = true
   formData.value = cloneDeep(row)
 }
 //#endregion
 
 //#region 查
-const tableData = ref<GetTableData[]>([])
+const tableData = ref<CanteenVoteData[]>([])
 const searchFormRef = ref<FormInstance | null>(null)
 const searchData = reactive({
-  username: "",
-  phone: ""
+  title: ""
 })
 const getTableData = () => {
   loading.value = true
-  getTableDataApi({
-    currentPage: paginationData.currentPage,
-    size: paginationData.pageSize,
-    username: searchData.username || undefined,
-    phone: searchData.phone || undefined
+  getVoteList({
+    currPage: paginationData.currentPage,
+    pageSize: paginationData.pageSize,
+    keyword: searchData.title || undefined
   })
     .then(({ data }) => {
       paginationData.total = data.total
-      tableData.value = data.list
+      tableData.value = data.records
     })
     .catch(() => {
       tableData.value = []
@@ -115,8 +121,8 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getTabl
   <div class="app-container">
     <el-card v-loading="loading" shadow="never" class="search-wrapper">
       <el-form ref="searchFormRef" :inline="true" :model="searchData">
-        <el-form-item prop="username" label="标题">
-          <el-input v-model="searchData.username" placeholder="请输入" />
+        <el-form-item prop="title" label="标题">
+          <el-input v-model="searchData.title" placeholder="请输入" />
         </el-form-item>
         <el-form-item>
           <el-button type="primary" :icon="Search" @click="handleSearch">查询</el-button>
@@ -142,7 +148,7 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getTabl
       <div class="table-wrapper">
         <el-table :data="tableData">
           <el-table-column type="selection" width="50" align="center" />
-          <el-table-column prop="username" label="标题" align="center" />
+          <el-table-column prop="title" label="标题" align="center" />
           <!-- <el-table-column prop="roles" label="角色" align="center">
             <template #default="scope">
               <el-tag v-if="scope.row.roles === 'admin'" type="primary" effect="plain">admin</el-tag>
@@ -153,11 +159,11 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getTabl
           <el-table-column prop="endTime" label="结束时间" align="center" />
           <el-table-column prop="status" label="状态" align="center">
             <template #default="scope">
-              <el-tag v-if="scope.row.status" type="success" effect="plain">启用</el-tag>
+              <el-tag v-if="scope.row.available" type="success" effect="plain">启用</el-tag>
               <el-tag v-else type="danger" effect="plain">禁用</el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="createTime" label="创建时间" align="center" />
+          <!-- <el-table-column prop="updateTime" label="更新时间" align="center" /> -->
           <el-table-column fixed="right" label="操作" width="200" align="center">
             <template #default="scope">
               <el-button type="primary" text bg size="small">查看</el-button>
@@ -183,16 +189,43 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getTabl
     <!-- 新增/修改 -->
     <el-dialog
       v-model="dialogVisible"
-      :title="formData.id === undefined ? '新增用户' : '修改用户'"
+      :title="formData.voteId === undefined ? '新增问卷' : '修改问卷'"
       @closed="resetForm"
       width="30%"
     >
       <el-form ref="formRef" :model="formData" :rules="formRules" label-width="100px" label-position="left">
-        <el-form-item prop="username" label="用户名">
-          <el-input v-model="formData.username" placeholder="请输入" />
+        <el-form-item prop="title" label="标题">
+          <el-input v-model="formData.title" placeholder="请输入" />
         </el-form-item>
-        <el-form-item prop="password" label="密码" v-if="formData.id === undefined">
-          <el-input v-model="formData.password" placeholder="请输入" />
+        <el-form-item prop="range" label="用餐范围">
+          <el-checkbox-group v-model="formData.range">
+            <el-checkbox label="早餐" value="早餐" />
+            <el-checkbox label="中餐" value="中餐" />
+            <el-checkbox label="晚餐" value="晚餐" />
+          </el-checkbox-group>
+        </el-form-item>
+        <el-form-item prop="qid" label="评测选项">
+          <el-checkbox-group v-model="formData.qid">
+            <el-checkbox label="口味" value="1" />
+            <el-checkbox label="卫生" value="2" />
+            <el-checkbox label="服务" value="3" />
+          </el-checkbox-group>
+        </el-form-item>
+        <el-form-item prop="startTime" label="开始时间">
+          <el-date-picker
+            v-model="formData.startTime"
+            type="datetime"
+            value-format="YYYY-MM-DD HH:mm:ss"
+            placeholder="选择日期和时间"
+          />
+        </el-form-item>
+        <el-form-item prop="endTime" label="结束时间">
+          <el-date-picker
+            v-model="formData.endTime"
+            type="datetime"
+            value-format="YYYY-MM-DD HH:mm:ss"
+            placeholder="选择日期和时间"
+          />
         </el-form-item>
       </el-form>
       <template #footer>
