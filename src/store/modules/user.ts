@@ -5,7 +5,7 @@ import { useTagsViewStore } from "./tags-view"
 import { useSettingsStore } from "./settings"
 import { getToken, removeToken, setToken } from "@/utils/cache/cookies"
 import { resetRouter } from "@/router"
-import { loginApi, getUserInfoApi } from "@/api/login"
+import { loginApi, getUserInfoApi, loginByTokenApi } from "@/api/login"
 import { type LoginRequestData } from "@/api/login/types/login"
 import routeSettings from "@/config/route"
 
@@ -23,6 +23,13 @@ export const useUserStore = defineStore("user", () => {
     setToken(data.token)
     token.value = data.token
   }
+  /** TOKEN登录 */
+  const urlTokenLogin = async (urlToken: string) => {
+    const { data } = await loginByTokenApi(urlToken)
+    setToken(data.token)
+    token.value = data.token
+  }
+
   /** 获取用户详情 */
   const getInfo = async () => {
     const { data } = await getUserInfoApi()
@@ -60,7 +67,17 @@ export const useUserStore = defineStore("user", () => {
     }
   }
 
-  return { token, roles, username, login, getInfo, changeRoles, logout, resetToken }
+  return {
+    token,
+    roles,
+    username,
+    login,
+    urlTokenLogin,
+    getInfo,
+    changeRoles,
+    logout,
+    resetToken
+  }
 })
 
 /** 在 setup 外使用 */

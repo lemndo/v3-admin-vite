@@ -47,6 +47,13 @@ export const constantRoutes: RouteRecordRaw[] = [
     }
   },
   {
+    path: "/canteen/vote",
+    component: () => import("@/views/canteen/vote/index.vue"),
+    meta: {
+      hidden: true
+    }
+  },
+  {
     path: "/",
     component: Layouts,
     redirect: "/dashboard",
@@ -78,7 +85,7 @@ export const constantRoutes: RouteRecordRaw[] = [
         component: () => import("@/views/canteen/vote/index.vue"),
         name: "Vote",
         meta: {
-          title: "投票",
+          title: "食堂满意度调查",
           KeepAlive: true
         }
       },
@@ -87,7 +94,7 @@ export const constantRoutes: RouteRecordRaw[] = [
         component: () => import("@/views/canteen/satisfaction/index.vue"),
         name: "Satisfaction",
         meta: {
-          title: "食堂满意度调查",
+          title: "食堂问卷管理",
           KeepAlive: true
         }
       }

@@ -18,6 +18,18 @@ export function loginApi(data: Login.LoginRequestData) {
   })
 }
 
+/** token登录 */
+export function loginByTokenApi(token: string) {
+  const data = {
+    TOKEN: token
+  }
+  return request<any>({
+    url: "/common/login/loginByToken",
+    method: "POST",
+    data
+  })
+}
+
 /** 获取用户详情 */
 export function getUserInfoApi() {
   return request<Login.UserInfoResponseData>({

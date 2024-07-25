@@ -36,3 +36,20 @@ export function getVoteList(data: Canteen.pageData) {
     data
   })
 }
+
+/** 获取最新可参与的问卷信息 */
+export function getOneAvailableVote() {
+  return request<ApiResponseData<Canteen.CanteenVoteData>>({
+    url: "/canteen/canteenVote/getOneVote",
+    method: "GET"
+  })
+}
+
+/** 提交问卷 */
+export function submitVote(data: Canteen.SubmitVoteRequestData) {
+  return request<ApiResponseData<any>>({
+    url: "/canteen/canteenVote/submitVote",
+    method: "POST",
+    data
+  })
+}

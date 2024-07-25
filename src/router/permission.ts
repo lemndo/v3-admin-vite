@@ -18,11 +18,18 @@ router.beforeEach(async (to, _from, next) => {
   const userStore = useUserStoreHook()
   const permissionStore = usePermissionStoreHook()
   const token = getToken()
+  const urlToken = to.query.token
 
   // 如果没有登陆
   if (!token) {
     // 如果在免登录的白名单中，则直接进入
     if (isWhiteList(to)) return next()
+    // 如果url携带TOKEN则使用TOKEN登录
+    if (typeof urlToken === "string") {
+      userStore.urlTokenLogin(urlToken).then(() => {
+        next()
+      })
+    }
     // 其他没有访问权限的页面将被重定向到登录页面
     return next("/login")
   }
