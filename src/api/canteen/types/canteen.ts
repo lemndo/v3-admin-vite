@@ -13,6 +13,12 @@ export interface CreateOrUpdateVoteRequestData {
   qid: string[]
 }
 
+export interface SubmitVoteRequestData {
+  voteId: string
+  score: Array<number>
+  suggestion: string
+}
+
 export interface CanteenVoteData {
   voteId: string
   title: string
