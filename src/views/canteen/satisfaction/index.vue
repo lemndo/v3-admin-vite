@@ -1,11 +1,25 @@
 <script lang="ts" setup>
-import { reactive, ref, watch } from "vue"
-import { createVoteApi, deleteVoteApi, getVoteList, updateVoteApi } from "@/api/canteen"
-import { CreateOrUpdateVoteRequestData, type CanteenVoteData } from "@/api/canteen/types/canteen"
+import { computed, reactive, ref, watch } from "vue"
+import {
+  createVoteApi,
+  deleteVoteApi,
+  getVoteCommentsApi,
+  getVoteList,
+  getVoteResultApi,
+  updateVoteApi
+} from "@/api/canteen"
+import {
+  CanteenVoteResult,
+  CommentsData,
+  CreateOrUpdateVoteRequestData,
+  type CanteenVoteData
+} from "@/api/canteen/types/canteen"
+import { formatDate } from "@/utils"
 import { type FormInstance, type FormRules, ElMessage, ElMessageBox } from "element-plus"
 import { Search, Refresh, CirclePlus, Delete, Download, RefreshRight } from "@element-plus/icons-vue"
 import { usePagination } from "@/hooks/usePagination"
 import { cloneDeep } from "lodash-es"
+import { HORIZONTAL } from "element-plus/es/components/virtual-list/src/defaults.mjs"
 
 defineOptions({
   // 命名当前组件
@@ -22,7 +36,7 @@ const DEFAULT_FORM_DATA: CreateOrUpdateVoteRequestData = {
   startTime: "",
   endTime: "",
   range: [],
-  qid: []
+  qid: ["1", "2", "3"]
 }
 const dialogVisible = ref<boolean>(false)
 const formRef = ref<FormInstance | null>(null)
@@ -77,6 +91,55 @@ const handleDelete = (row: CanteenVoteData) => {
 const handleUpdate = (row: CreateOrUpdateVoteRequestData) => {
   dialogVisible.value = true
   formData.value = cloneDeep(row)
+}
+//#endregion
+
+//#region 查看
+const scoreData = ref<CanteenVoteResult>({
+  score: [],
+  countScore: 0
+})
+const commentsData = ref<CommentsData[]>([])
+const viewDialogVisible = ref<boolean>(false)
+const commentStr = (content: string) => {
+  const rel = /#[^#]+#/g
+  return content.replace(rel, "<i>$&</i>")
+}
+const handleView = (row: CanteenVoteData) => {
+  viewDialogVisible.value = true
+  console.log(row.voteId)
+  getVoteResultApi(row.voteId).then((response) => {
+    const data = response.data
+    scoreData.value.score = data.score
+    scoreData.value.countScore = data.countScore
+  })
+  loading.value = true
+  getVoteCommentsApi({
+    currPage: paginationData.currentPage,
+    pageSize: paginationData.pageSize,
+    keyword: row.voteId
+  })
+    .then((response) => {
+      const data = response.data
+      paginationData.total = data.total
+      commentsData.value = data.records
+    })
+    .catch(() => {})
+    .finally(() => {
+      loading.value = false
+    })
+}
+
+//无限滚动
+const cmt_loading = ref(false)
+const noMore = computed(() => paginationData.pageSize >= paginationData.total)
+const disabled = computed(() => loading.value || noMore.value)
+const load = () => {
+  cmt_loading.value = true
+  setTimeout(() => {
+    paginationData.pageSize += 4
+    cmt_loading.value = false
+  }, 1000)
 }
 //#endregion
 
@@ -166,7 +229,7 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getTabl
           <!-- <el-table-column prop="updateTime" label="更新时间" align="center" /> -->
           <el-table-column fixed="right" label="操作" width="200" align="center">
             <template #default="scope">
-              <el-button type="primary" text bg size="small">查看</el-button>
+              <el-button type="primary" text bg size="small" @click="handleView(scope.row)">查看</el-button>
               <el-button type="primary" text bg size="small" @click="handleUpdate(scope.row)">修改</el-button>
               <el-button type="danger" text bg size="small" @click="handleDelete(scope.row)">删除</el-button>
             </template>
@@ -206,9 +269,9 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getTabl
         </el-form-item>
         <el-form-item prop="qid" label="评测选项">
           <el-checkbox-group v-model="formData.qid">
-            <el-checkbox label="口味" value="1" />
-            <el-checkbox label="卫生" value="2" />
-            <el-checkbox label="服务" value="3" />
+            <el-checkbox label="口味" value="1" disabled />
+            <el-checkbox label="卫生" value="2" disabled />
+            <el-checkbox label="服务" value="3" disabled />
           </el-checkbox-group>
         </el-form-item>
         <el-form-item prop="startTime" label="开始时间">
@@ -232,6 +295,73 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getTabl
         <el-button @click="dialogVisible = false">取消</el-button>
         <el-button type="primary" @click="handleCreateOrUpdate" :loading="loading">确认</el-button>
       </template>
+    </el-dialog>
+    <!-- 查看详情 -->
+    <el-dialog v-model="viewDialogVisible" title="查看问卷">
+      <div class="score-show">
+        <div class="rate">
+          <div>
+            口味评分:
+            <el-rate
+              v-model="scoreData.score[0]"
+              disabled
+              show-score
+              text-color="#ff9900"
+              score-template="{value} 分"
+            />
+          </div>
+          <div>
+            卫生评分:
+            <el-rate
+              v-model="scoreData.score[1]"
+              disabled
+              show-score
+              text-color="#ff9900"
+              score-template="{value} 分"
+            />
+          </div>
+          <div>
+            服务评分:
+            <el-rate
+              v-model="scoreData.score[2]"
+              disabled
+              show-score
+              text-color="#ff9900"
+              score-template="{value} 分"
+            />
+          </div>
+        </div>
+        <div class="count-score">{{ scoreData.countScore }}</div>
+      </div>
+
+      <el-divider />
+      <div class="comments-list">
+        <div style="max-height: 300px; overflow-y: auto">
+          <el-row v-infinite-scroll="load" :infinite-scroll-disabled="disabled">
+            <el-space fill wrap :fill-ratio="30" :direction="HORIZONTAL" :size="20" style="width: 100%">
+              <div v-for="(comment, index) in commentsData" :key="index" class="comment-item">
+                <el-col>
+                  <el-card>
+                    <template #header>
+                      <div class="card-header">
+                        <div class="score">
+                          <el-rate v-model="comment.countScore" disabled />
+                        </div>
+                        <div class="time">
+                          {{ formatDate(comment.submitTime) }}
+                        </div>
+                      </div>
+                    </template>
+                    <div class="c_content" v-html="commentStr(comment.suggestion)" />
+                  </el-card>
+                </el-col>
+              </div>
+            </el-space>
+            <el-divider v-if="cmt_loading" content-position="center">加载中...</el-divider>
+            <el-divider v-if="noMore" content-position="center">没有更多评论</el-divider>
+          </el-row>
+        </div>
+      </div>
     </el-dialog>
   </div>
 </template>
@@ -257,5 +387,35 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getTabl
 .pager-wrapper {
   display: flex;
   justify-content: flex-end;
+}
+.score-show {
+  display: flex;
+  justify-content: space-between;
+  .count-score {
+    margin-right: 20%;
+    color: #ff9900;
+    font-size: 10ch;
+  }
+}
+.comments-list {
+  // .comment-item {
+  //   margin-left: 30px;
+  // }
+  // .el-row {
+  //   // display: flex;
+  //   // justify-content: space-between;
+  //   width: 100%;
+  //   .el-col {
+  //     margin: 10px 20px 0px 0px;
+  //   }
+  // }
+  .card-header {
+    height: 10px;
+    display: flex;
+    align-items: center;
+    .time {
+      margin-left: auto;
+    }
+  }
 }
 </style>

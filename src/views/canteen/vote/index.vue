@@ -93,7 +93,7 @@ onMounted(async () => {
             <el-form-item prop="suggestion">
               <el-input
                 v-model="formData.suggestion"
-                style="width: 250px"
+                style="width: 260px"
                 :rows="3"
                 type="textarea"
                 maxlength="50"

@@ -53,3 +53,24 @@ export function submitVote(data: Canteen.SubmitVoteRequestData) {
     data
   })
 }
+
+/** 获取评测结果数据 */
+export function getVoteResultApi(voteId: string) {
+  const data = {
+    voteId: voteId
+  }
+  return request<ApiResponseData<Canteen.CanteenVoteResult>>({
+    url: "/canteen/canteenVoteResult/getResult",
+    method: "POST",
+    data
+  })
+}
+
+/** 获取评论数据 */
+export function getVoteCommentsApi(data: Canteen.pageData) {
+  return request<Canteen.CommentsResponseData>({
+    url: "/canteen/canteenVoteResult/getComments",
+    method: "POST",
+    data
+  })
+}

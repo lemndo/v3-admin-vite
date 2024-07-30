@@ -4,6 +4,14 @@ export interface pageData {
   pageSize: number
 }
 
+export interface pageResponseData<data> {
+  records: data
+  total: number
+  size: number
+  current: number
+  pages: number
+}
+
 export interface CreateOrUpdateVoteRequestData {
   voteId?: string
   title: string
@@ -30,6 +38,26 @@ export interface CanteenVoteData {
   range: string[]
   available: number
 }
+
+export interface CanteenVoteResult {
+  score: Array<number>
+  countScore: number
+}
+export interface CommentsData {
+  score: number[]
+  countScore: number
+  suggestion: string
+  submitTime: string
+}
+export type CommentsResponseData = ApiResponseData<pageResponseData<CommentsData[]>>
+
+// export type CommentsResponseData = ApiResponseData<{
+//   records: CommentsData
+//   total: number
+//   size: number
+//   current: number
+//   pages: number
+// }>
 
 export type canteenVoteListResponseData = ApiResponseData<{
   records: CanteenVoteData[]
