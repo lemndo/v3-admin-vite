@@ -1,6 +1,5 @@
 <script lang="ts" setup>
 import { useTheme } from "@/hooks/useTheme"
-import { ElNotification } from "element-plus"
 // 将 Element Plus 的语言设置为中文
 import zhCn from "element-plus/es/locale/lang/zh-cn"
 
@@ -10,14 +9,14 @@ const { initTheme } = useTheme()
 initTheme()
 
 /** 作者小心思 */
-ElNotification({
-  title: "Hello",
-  type: "success",
-  dangerouslyUseHTMLString: true,
-  message: "<a style='color: teal' target='_blank' >这是一则通知！</a>",
-  duration: 0,
-  position: "bottom-right"
-})
+// ElNotification({
+//   title: "Hello",
+//   type: "success",
+//   dangerouslyUseHTMLString: true,
+//   message: "<a style='color: teal' target='_blank' >这是一则通知！</a>",
+//   duration: 0,
+//   position: "bottom-right"
+// })
 </script>
 
 <template>

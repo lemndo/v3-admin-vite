@@ -16,7 +16,7 @@ const SELECT_RESPONSE_DATA = {
       disabled: true
     }
   ],
-  message: "获取 Select 数据成功"
+  msg: "获取 Select 数据成功"
 }
 
 /** 模拟接口 */
